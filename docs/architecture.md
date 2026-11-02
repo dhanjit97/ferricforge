@@ -1,6 +1,6 @@
 # Architecture Overview
 
-This document describes the system architecture of FerrisForge Academy — Rust Playground Pro.
+This document describes the system architecture of FerricForge.
 
 ## High-Level Design
 

@@ -1,4 +1,4 @@
-# FerrisForge Academy — Rust Playground Pro
+# FerricForge
 
 Welcome to FerrisForge Academy! 🦀
 

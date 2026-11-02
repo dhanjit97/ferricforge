@@ -1,5 +1,5 @@
 {
-  "name": "Rust Playground Pro",
+  "name": "FerricForge",
   "description": "An advanced, high-performance Rust playground featuring real rustc compilation, multi-file workspace, interactive borrow checker diagnostics, assembly & IR visualizers, Clippy fixes, and intelligent error explanation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

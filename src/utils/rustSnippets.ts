@@ -33,7 +33,7 @@ fn main() {
         Greeter::Robot(404),
     ];
 
-    println!("--- Rust Playground Pro Greeting ---");
+    println!("--- FerricForge Greeting ---");
     for member in &crew {
         member.speak();
     }

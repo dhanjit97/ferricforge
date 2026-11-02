@@ -1,6 +1,6 @@
 # Security Model
 
-This document describes the security architecture and privacy commitments of FerrisForge Academy — Rust Playground Pro.
+This document describes the security architecture and privacy commitments of FerricForge.
 
 ## Security Philosophy
 

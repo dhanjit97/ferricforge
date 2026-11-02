@@ -1,6 +1,6 @@
 # Development Guide
 
-This document describes how to set up, develop, and maintain FerrisForge Academy — Rust Playground Pro.
+This document describes how to set up, develop, and maintain FerricForge.
 
 ---
 

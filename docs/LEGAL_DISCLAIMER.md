@@ -2,7 +2,7 @@
 
 ## 1. Purpose of This Document
 
-This legal disclaimer applies to FerrisForge Academy — Rust Playground Pro (the "Application"), including all source code, documentation, binaries, and related materials. By accessing or using the Application, you agree to the terms below.
+This legal disclaimer applies to FerricForge (the "Application"), including all source code, documentation, binaries, and related materials. By accessing or using the Application, you agree to the terms below.
 
 If you do not agree, do not use the Application.
 

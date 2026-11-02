@@ -1,6 +1,6 @@
 # User Guide
 
-This guide walks you through using FerrisForge Academy — Rust Playground Pro, from writing your first program to completing the guided curriculum.
+This guide walks you through using FerricForge, from writing your first program to completing the guided curriculum.
 
 ---
 

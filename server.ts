@@ -538,7 +538,7 @@ async function startServer() {
 
   const PORT = 3000;
   app.listen(PORT, 'localhost', () => {
-    console.log(`Rust Playground Pro server listening on http://localhost:${PORT}`);
+    console.log(`FerricForge server listening on http://localhost:${PORT}`);
   });
 }
 
