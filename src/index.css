@@ -1,0 +1,280 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --ff-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --ff-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Surface palette — single source of truth for dark backgrounds */
+    --surface-root: #0b0d13;        /* app shell */
+    --surface-panel: #0d1117;       /* inspector, terminals, modals */
+    --surface-panel-lift: #161b22;  /* headers, tab bars, toolbars */
+    --surface-card: #16161a;        /* raised cards inside panels */
+    --surface-editor: #18181b;      /* code editor focus surface */
+    --surface-editor-gutter: #141416;
+    --surface-input: #1f2329;       /* form inputs */
+    --surface-hover: #23262e;       /* hover state */
+    --surface-selected: #30363d;    /* active selection */
+
+    --border-muted: #30363d;
+    --border-strong: #444c56;
+
+    --text-dim: #7c818a;
+    --text-muted: #9aa3ad;
+    --text: #c9d1d9;
+    --text-strong: #e7edf3;
+
+    --accent-rust: #de3804;
+    --accent-rust-hover: #c23103;
+
+    --radius: 8px;
+    --radius-sm: 4px;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  body {
+    font-family: var(--ff-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  code, pre, kbd, samp, .font-mono {
+    font-family: var(--ff-mono);
+    font-feature-settings: "calt" 1, "zero" 1;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* ==========================================================================
+   THEME STYLES (7 Distinct Aesthetics)
+   ========================================================================== */
+
+/* 1. Glassmorphism */
+[data-theme="glassmorphism"] {
+  background: radial-gradient(circle at 50% 0%, #171b26 0%, #0b0d13 100%) !important;
+}
+[data-theme="glassmorphism"] header,
+[data-theme="glassmorphism"] nav,
+[data-theme="glassmorphism"] .theme-panel {
+  background: rgba(18, 22, 33, 0.7) !important;
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+[data-theme="glassmorphism"] .theme-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 2. Neomorphism */
+[data-theme="neumorphism"] {
+  background: #1c1e22 !important;
+}
+[data-theme="neumorphism"] header,
+[data-theme="neumorphism"] .theme-panel {
+  background: #1c1e22 !important;
+  border-color: #282b31 !important;
+}
+[data-theme="neumorphism"] .theme-card,
+[data-theme="neumorphism"] button:not(.btn-primary) {
+  background: #1c1e22 !important;
+  box-shadow: 4px 4px 10px #131417, -4px -4px 10px #25282d !important;
+  border: 1px solid #23262b !important;
+  border-radius: 8px;
+}
+[data-theme="neumorphism"] .theme-inset,
+[data-theme="neumorphism"] input,
+[data-theme="neumorphism"] select {
+  background: #191b1f !important;
+  box-shadow: inset 2px 2px 5px #111215, inset -2px -2px 5px #212429 !important;
+  border: 1px solid #202328 !important;
+}
+
+/* 3. Minimalism */
+[data-theme="minimalism"] {
+  background: #000000 !important;
+  color: #ededed !important;
+}
+[data-theme="minimalism"] header,
+[data-theme="minimalism"] .theme-panel,
+[data-theme="minimalism"] .theme-card {
+  background: #050505 !important;
+  border-color: #222222 !important;
+  box-shadow: none !important;
+}
+[data-theme="minimalism"] button,
+[data-theme="minimalism"] select,
+[data-theme="minimalism"] input {
+  box-shadow: none !important;
+  border-radius: 2px !important;
+}
+
+/* 4. Liquid Glass */
+[data-theme="liquid-glass"] {
+  background: radial-gradient(ellipse at 85% 10%, rgba(147, 51, 234, 0.18), transparent 50%),
+              radial-gradient(ellipse at 15% 90%, rgba(6, 182, 212, 0.16), transparent 50%),
+              #090a10 !important;
+}
+[data-theme="liquid-glass"] header,
+[data-theme="liquid-glass"] .theme-panel {
+  background: rgba(14, 16, 26, 0.65) !important;
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
+  border-color: rgba(168, 85, 247, 0.22) !important;
+  box-shadow: 0 8px 32px rgba(6, 182, 212, 0.08);
+}
+[data-theme="liquid-glass"] .theme-card {
+  background: rgba(20, 24, 40, 0.5) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  box-shadow: 0 4px 20px rgba(147, 51, 234, 0.1);
+}
+
+/* 5. Neo-Brutalism */
+[data-theme="neo-brutalism"] {
+  background: #141414 !important;
+}
+[data-theme="neo-brutalism"] header,
+[data-theme="neo-brutalism"] .theme-panel {
+  background: #1e1e1e !important;
+  border: 2px solid #000000 !important;
+}
+[data-theme="neo-brutalism"] button,
+[data-theme="neo-brutalism"] .theme-card,
+[data-theme="neo-brutalism"] select,
+[data-theme="neo-brutalism"] input {
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  border-radius: 4px !important;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+[data-theme="neo-brutalism"] button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+/* 6. Material Design */
+[data-theme="material-design"] {
+  background: #141218 !important;
+}
+[data-theme="material-design"] header,
+[data-theme="material-design"] .theme-panel {
+  background: #1d1b20 !important;
+  border-color: #332d41 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 4px 8px rgba(0,0,0,0.3);
+}
+[data-theme="material-design"] .theme-card {
+  background: #2b2930 !important;
+  border-color: #49454f !important;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15);
+}
+[data-theme="material-design"] button {
+  border-radius: 20px;
+}
+
+/* 7. Flat Design */
+[data-theme="flat-design"] {
+  background: #1a1e24 !important;
+}
+[data-theme="flat-design"] header,
+[data-theme="flat-design"] .theme-panel,
+[data-theme="flat-design"] .theme-card,
+[data-theme="flat-design"] button,
+[data-theme="flat-design"] input,
+[data-theme="flat-design"] select {
+  box-shadow: none !important;
+  border-color: #2d333b !important;
+  background-image: none !important;
+}
+[data-theme="flat-design"] header {
+  background: #22272e !important;
+}
+[data-theme="flat-design"] .theme-panel {
+  background: #1c2128 !important;
+}
+
+/* ==========================================================================
+   LIGHT MODE BASE STYLES
+   ========================================================================== */
+
+[data-mode="light"] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-mode="light"] header,
+[data-mode="light"] nav,
+[data-mode="light"] .theme-panel {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+[data-mode="light"] .theme-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+/* Light mode: lighten hardcoded dark panel surfaces */
+[data-mode="light"] .bg-\[\#0d1117\],
+[data-mode="light"] .bg-\[\#0d1117\]\/80,
+[data-mode="light"] .bg-\[\#0d1117\]\/90,
+[data-mode="light"] .bg-\[\#121214\],
+[data-mode="light"] .bg-\[\#161b22\] {
+  background-color: #f8fafc !important;
+}
+
+/* Light mode: dark text on light panel surfaces */
+[data-mode="light"] [data-sidebar] .text-neutral-200,
+[data-mode="light"] [data-sidebar] .text-neutral-100,
+[data-mode="light"] [data-sidebar] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] [data-sidebar] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] [data-sidebar] .text-neutral-400 {
+  color: #475569 !important;
+}
+
+/* Light mode: dark text inside right-pane inspector/header bars */
+[data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-neutral-200,
+[data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-neutral-100,
+[data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-neutral-400 {
+  color: #475569 !important;
+}
+
+/* Keep the code editor dark even in light mode */
+[data-mode="light"] .bg-\[\#18181b\] {
+  background-color: #18181b !important;
+}
+
+
