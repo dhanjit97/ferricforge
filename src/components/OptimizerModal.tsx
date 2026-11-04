@@ -1,6 +1,7 @@
-import React from 'react';
-import { Sparkles, Check, Wand2, X, Award, Lightbulb } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Sparkles, Check, Wand2, X, Lightbulb } from 'lucide-react';
 import { OptimizationResult, OptimizationItem } from '../types/rust';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface OptimizerModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface OptimizerModalProps {
   isLoading: boolean;
   optimizationData: OptimizationResult | null;
   onApplyRecommendedCode: (code: string) => void;
+  targetFileName?: string;
 }
 
 export const OptimizerModal: React.FC<OptimizerModalProps> = ({
@@ -16,8 +18,22 @@ export const OptimizerModal: React.FC<OptimizerModalProps> = ({
   isLoading,
   optimizationData,
   onApplyRecommendedCode,
+  targetFileName,
 }) => {
   const [applied, setApplied] = React.useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
 
   if (!isOpen) return null;
 
@@ -34,7 +50,7 @@ export const OptimizerModal: React.FC<OptimizerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none">
+      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none theme-panel" ref={modalRef}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800 bg-[#16161a]">
           <div className="flex items-center gap-2.5">
@@ -42,8 +58,14 @@ export const OptimizerModal: React.FC<OptimizerModalProps> = ({
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-neutral-100">Rust Idioms & Zero-Cost Optimizer</h3>
-              <p className="text-xs text-neutral-400">Analysis for heap allocations, .clone() overhead, and pattern idioms</p>
+              <h3 className="text-sm font-bold text-neutral-100">Rust Idioms &amp; Zero-Cost Optimizer</h3>
+              <p className="text-xs text-neutral-400">
+                {targetFileName ? (
+                  <>Optimizing <span className="font-mono text-amber-400">{targetFileName}</span></>
+                ) : (
+                  'Analysis for heap allocations, .clone() overhead, and pattern idioms'
+                )}
+              </p>
             </div>
           </div>
           <button
@@ -90,7 +112,7 @@ export const OptimizerModal: React.FC<OptimizerModalProps> = ({
                   <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
                     Recommended Improvements ({optimizationData.optimizations.length})
                   </h4>
-                  {optimizationData.optimizations.map((item, idx) => (
+                  {optimizationData.optimizations.map((item: OptimizationItem, idx: number) => (
                     <div key={idx} className="p-3.5 rounded-lg bg-neutral-900/80 border border-neutral-800 space-y-2">
                       <div className="font-semibold text-neutral-200 text-xs flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FilePlus2, X } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ModuleCreationModalProps {
   isOpen: boolean;
@@ -12,10 +13,23 @@ export const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
   onClose,
   onCreateModule,
 }) => {
-  if (!isOpen) return null;
-
   const [newModName, setNewModName] = useState('');
   const [autoDeclareInMain, setAutoDeclareInMain] = useState(true);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
+
+  if (!isOpen) return null;
 
   const submitCreateModule = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -28,7 +42,7 @@ export const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="bg-[#16161a] border border-neutral-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div className="bg-[#16161a] border border-neutral-800 rounded-xl w-full max-w-md shadow-2xl overflow-hidden theme-panel" ref={modalRef}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 bg-[#121215]">
           <div className="flex items-center gap-2">
             <FilePlus2 className="w-4 h-4 text-[#DE3804]" />
@@ -37,6 +51,7 @@ export const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
           <button
             onClick={onClose}
             className="text-neutral-400 hover:text-white cursor-pointer"
+            aria-label="Close Module Creator"
           >
             <X className="w-4 h-4" />
           </button>

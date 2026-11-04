@@ -45,7 +45,6 @@ import { ClippyModal } from './components/ClippyModal';
 import { OptimizerModal } from './components/OptimizerModal';
 import { AcademyModal } from './components/AcademyModal';
 import { ReferenceHubModal } from './components/ReferenceHubModal';
-import { DsaLabModal } from './components/DsaLabModal';
 import { AppTheme, LayoutMode } from './types/theme';
 
 import {
@@ -141,7 +140,17 @@ export default function App() {
   // Playground settings
   const [channel, setChannel] = useState<RustChannel>('stable');
   const [mode, setMode] = useState<RustMode>('debug');
-  const [edition, setEdition] = useState<RustEdition>('2021');
+  const [edition, setEdition] = useState<RustEdition>(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.substring(1);
+      const params = new URLSearchParams(hash);
+      const ed = params.get('edition');
+      if (ed === '2015' || ed === '2018' || ed === '2021' || ed === '2024') {
+        return ed;
+      }
+    }
+    return '2021';
+  });
   const [crateType, setCrateType] = useState<RustCrateType>('bin');
   const [target, setTarget] = useState<OutputTarget>('execute');
   const [backtrace, setBacktrace] = useState<boolean>(false);
@@ -188,6 +197,7 @@ export default function App() {
     title: string;
     message: string;
     xpGained: number;
+    isError?: boolean;
   } | null>(null);
 
   const [isVerifyingExercise, setIsVerifyingExercise] = useState(false);
@@ -265,14 +275,13 @@ export default function App() {
   // Modals state
   const [isAcademyOpen, setIsAcademyOpen] = useState(false);
   const [isCookbookOpen, setIsCookbookOpen] = useState(false);
-  const [isCratesOpen, setIsCratesOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isBorrowGuideOpen, setIsBorrowGuideOpen] = useState(false);
   const [isClippyOpen, setIsClippyOpen] = useState(false);
   const [isOptimizerOpen, setIsOptimizerOpen] = useState(false);
   const [isReferenceHubOpen, setIsReferenceHubOpen] = useState(false);
-  const [isDsaLabOpen, setIsDsaLabOpen] = useState(false);
+  const [academySection, setAcademySection] = useState<'curriculum' | 'frameworks' | 'capstones' | 'memory-explorer' | 'dsa'>('curriculum');
   const [optimizationData, setOptimizationData] = useState<OptimizationResult | null>(null);
 
   // Sync theme with HTML document class & data-mode attribute
@@ -412,14 +421,15 @@ export default function App() {
   };
 
   // Run / Compile / Test / Clippy with Workspace Bundler
-  const handleRun = useCallback(async () => {
+  const handleRun = useCallback(async (targetOverride?: OutputTarget) => {
+    const activeTarget = targetOverride || target;
     setIsRunning(true);
     const startTime = performance.now();
 
     const { bundledCode, lineMappings } = bundleWorkspace(files);
 
     try {
-      if (target === 'execute') {
+      if (activeTarget === 'execute') {
         const data = await fetchJson('/api/execute', {
           channel,
           mode,
@@ -448,7 +458,7 @@ export default function App() {
         } else {
           setActiveTab('terminal');
         }
-      } else if (target === 'test') {
+      } else if (activeTarget === 'test') {
         const data = await fetchJson('/api/execute', {
           channel,
           mode,
@@ -467,7 +477,7 @@ export default function App() {
         );
         setDiagnostics(mappedDiags);
         setActiveTab('terminal');
-      } else if (target === 'clippy') {
+      } else if (activeTarget === 'clippy') {
         const data = await fetchJson('/api/clippy', {
           channel,
           edition,
@@ -484,12 +494,12 @@ export default function App() {
         setDiagnostics(mappedDiags);
         setActiveTab('diagnostics');
       } else if (
-        target === 'asm' ||
-        target === 'llvm-ir' ||
-        target === 'hir' ||
-        target === 'mir' ||
-        target === 'wasm' ||
-        target === 'expand'
+        activeTarget === 'asm' ||
+        activeTarget === 'llvm-ir' ||
+        activeTarget === 'hir' ||
+        activeTarget === 'mir' ||
+        activeTarget === 'wasm' ||
+        activeTarget === 'expand'
       ) {
         const data = await fetchJson('/api/compile', {
           channel,
@@ -498,7 +508,7 @@ export default function App() {
           crateType,
           tests: false,
           backtrace,
-          target,
+          target: activeTarget,
           code: bundledCode,
         });
         const durationMs = Math.round(performance.now() - startTime);
@@ -537,14 +547,13 @@ export default function App() {
     }
   }, [edition, activeFile]);
 
-  // AI Optimizer
+  // AI Optimizer (optimizes active file preserving multi-file architecture)
   const handleOptimize = async () => {
     setIsOptimizing(true);
     setIsOptimizerOpen(true);
-    const { bundledCode } = bundleWorkspace(files);
 
     try {
-      const data = await fetchJson('/api/optimize', { code: bundledCode });
+      const data = await fetchJson('/api/optimize', { code: activeFile.content });
       setOptimizationData(data);
     } catch (err) {
       console.error('Optimization error:', err);
@@ -687,7 +696,12 @@ export default function App() {
           });
         }
       } else {
-        alert('Some test assertions did not pass yet. Check the Terminal output tab on the right to inspect failed assertions and review hints in the Academy!');
+        setCelebrationBanner({
+          title: 'Exercise Verification Incomplete',
+          message: 'Some test assertions did not pass yet. Check the Terminal output tab on the right to inspect failed assertions and review hints in the Academy!',
+          xpGained: 0,
+          isError: true,
+        });
       }
     } catch (err: unknown) {
       console.error('Verification failed:', err);
@@ -785,22 +799,18 @@ export default function App() {
   const inspectorPaneStyle = customSplit !== null ? { width: `${100 - customSplit}%` } : {};
 
   const editorWidth =
-    isSidebarOpen
-      ? 'flex-1'
-      : layoutMode === 'zen'
-      ? 'w-[70%]'
+    layoutMode === 'zen'
+      ? 'w-full md:w-[70%]'
       : layoutMode === 'analysis'
-      ? 'w-[35%]'
-      : 'w-1/2';
+      ? 'w-full md:w-[35%]'
+      : 'w-full md:w-1/2';
 
   const inspectorWidth =
-    isSidebarOpen
-      ? 'flex-1'
-      : layoutMode === 'zen'
-      ? 'w-[30%]'
+    layoutMode === 'zen'
+      ? 'w-full md:w-[30%]'
       : layoutMode === 'analysis'
-      ? 'w-[65%]'
-      : 'w-1/2';
+      ? 'w-full md:w-[65%]'
+      : 'w-full md:w-1/2';
 
   return (
     <div
@@ -812,16 +822,25 @@ export default function App() {
           : 'bg-white text-neutral-900'
       }`}
     >
-      {/* Celebration Banner */}
+      {/* Celebration / Notification Banner */}
       {celebrationBanner && (
-        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-[#DE3804] text-white px-5 py-2.5 flex items-center justify-between text-xs font-medium shadow-md z-40 animate-fade-in">
+        <div className={`px-5 py-2.5 flex items-center justify-between text-xs font-medium shadow-md animate-fade-in fixed inset-x-0 top-0 z-50 ${
+          celebrationBanner.isError
+            ? 'bg-gradient-to-r from-red-700 via-amber-700 to-[#DE3804] text-white'
+            : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-[#DE3804] text-white'
+        }`}>
           <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-300 shrink-0" />
+            {celebrationBanner.isError ? (
+              <AlertCircle className="w-4 h-4 text-amber-300 shrink-0" />
+            ) : (
+              <Trophy className="w-4 h-4 text-amber-300 shrink-0" />
+            )}
             <span className="font-bold">{celebrationBanner.title}:</span>
             <span>{celebrationBanner.message}</span>
           </div>
           <button
             onClick={() => setCelebrationBanner(null)}
+            aria-label="Dismiss notification"
             className="p-1 hover:bg-black/20 rounded transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
@@ -832,25 +851,27 @@ export default function App() {
       {/* 1. Top Navigation Bar with Logo and Academy Badge */}
       <TopBar
         isRunning={isRunning}
-        onRun={handleRun}
+        onRun={() => handleRun()}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        theme={theme}
+        onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
       {/* 2. Developer Toolbar (controls moved to Sidebar) */}
 
       {/* 3. Main Workspace Split: Sidebar (optional) + Code Editor (Left) & Inspector (Right) */}
-      <main className={`flex-1 flex ${isSidebarOpen ? 'flex-row' : 'flex-col'} overflow-hidden relative`}>
+      <main className="flex-1 flex flex-row overflow-hidden relative">
         {isSidebarOpen && (
           <Sidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
-            onOpenAcademy={() => setIsAcademyOpen(true)}
-            onOpenDsaLab={() => setIsDsaLabOpen(true)}
+            onOpenAcademy={() => { setAcademySection('curriculum'); setIsAcademyOpen(true); }}
+            onOpenDsaLab={() => { setAcademySection('dsa'); setIsAcademyOpen(true); }}
             onOpenReferenceHub={() => setIsReferenceHubOpen(true)}
             onOpenCookbook={() => setIsCookbookOpen(true)}
             onOpenBorrowGuide={() => setIsBorrowGuideOpen(true)}
-            onOpenCrates={() => setIsCratesOpen(true)}
+            onOpenCrates={() => setActiveTab('cargo')}
             onOpenClippyInfo={() => setIsClippyOpen(true)}
             onOpenShortcuts={() => setIsShortcutsOpen(true)}
             onOpenShare={() => setIsShareOpen(true)}
@@ -906,8 +927,8 @@ export default function App() {
           />
         )}
 
-        {!isSidebarOpen && (
-          <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#0d1117]/50 border-b border-neutral-800 text-xs z-10">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#0d1117]/50 border-b border-neutral-800 text-xs z-10 shrink-0">
             <div className="flex items-center gap-2">
               <span className="text-neutral-500">Split:</span>
               {[20, 30, 40, 50, 60, 70, 80].map((p) => (
@@ -923,7 +944,7 @@ export default function App() {
               ))}
               <button
                 onClick={() => setCustomSplit(null)}
-                className="px-2 py-0.5 rounded text-[10px] font-medium text-neutral-400 hover:text-white"
+                className="px-2 py-0.5 rounded text-[10px] font-medium text-neutral-400 hover:text-white cursor-pointer"
               >
                 Auto
               </button>
@@ -933,155 +954,157 @@ export default function App() {
               Inspector {100 - (customSplit ?? (layoutMode === 'zen' ? 70 : layoutMode === 'analysis' ? 30 : 50))}%
             </div>
           </div>
-        )}
 
-        {/* Panes container: editor + inspector side by side */}
-        <div className="flex-1 flex overflow-hidden">
+          {/* Panes container: editor + inspector responsive split */}
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
-        {/* Left Pane: Multi-File Code Editor */}
-        <div
-          className={`${editorWidth} h-full flex flex-col transition-all duration-200 ease-in-out`}
-          style={editorPaneStyle}
-        >
-          <CodeEditor
-            files={files}
-            activeFilePath={activeFilePath}
-            onSelectFile={setActiveFilePath}
-            onChangeFileContent={handleChangeFileContent}
-            onCreateModule={handleCreateModule}
-            onDeleteModule={handleDeleteModule}
-            onToggleModDeclaration={handleToggleModDeclaration}
-            diagnostics={diagnostics}
-            selectedLine={selectedLine}
-            onSelectLine={(l, file) => {
-              if (file && file !== activeFilePath) {
-                setActiveFilePath(file);
-              }
-              setSelectedLine(l);
-              setActiveTab('diagnostics');
-            }}
-          />
-        </div>
+          {/* Left Pane: Multi-File Code Editor */}
+          <div
+            className={`${editorWidth} h-1/2 md:h-full flex flex-col transition-all duration-200 ease-in-out`}
+            style={editorPaneStyle}
+          >
+            <CodeEditor
+              files={files}
+              activeFilePath={activeFilePath}
+              onSelectFile={setActiveFilePath}
+              onChangeFileContent={handleChangeFileContent}
+              onCreateModule={handleCreateModule}
+              onDeleteModule={handleDeleteModule}
+              onToggleModDeclaration={handleToggleModDeclaration}
+              diagnostics={diagnostics}
+              selectedLine={selectedLine}
+              onSelectLine={(l, file) => {
+                if (file && file !== activeFilePath) {
+                  setActiveFilePath(file);
+                }
+                setSelectedLine(l);
+                setActiveTab('diagnostics');
+              }}
+            />
+          </div>
 
-        {/* Right Pane: Multi-Target Inspector Drawer */}
-        <div
-          className={`${inspectorWidth} h-full flex flex-col border-l border-neutral-800 bg-[#0d1117] transition-all duration-200 ease-in-out`}
-          style={inspectorPaneStyle}
-        >
-          {/* Tab Selection Bar */}
-          <div className="flex items-center justify-between px-3 border-b border-neutral-800 bg-[#161b22] text-xs">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setActiveTab('terminal')}
-                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
-                  activeTab === 'terminal'
-                    ? 'border-[#DE3804] text-white bg-neutral-800/40'
-                    : 'border-transparent text-neutral-400 hover:text-white'
-                }`}
-              >
-                <TerminalIcon className="w-3.5 h-3.5" />
-                <span>Output / Terminal</span>
-              </button>
+          {/* Right Pane: Multi-Target Inspector Drawer */}
+          <div
+            className={`${inspectorWidth} h-1/2 md:h-full flex flex-col border-t md:border-t-0 md:border-l border-neutral-800 bg-[#0d1117] transition-all duration-200 ease-in-out`}
+            style={inspectorPaneStyle}
+          >
+            {/* Tab Selection Bar */}
+            <div className="flex items-center justify-between px-3 border-b border-neutral-800 bg-[#161b22] text-xs">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setActiveTab('terminal')}
+                  className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
+                    activeTab === 'terminal'
+                      ? 'border-[#DE3804] text-white bg-neutral-800/40'
+                      : 'border-transparent text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <TerminalIcon className="w-3.5 h-3.5" />
+                  <span>Output / Terminal</span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('diagnostics')}
-                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
-                  activeTab === 'diagnostics'
-                    ? 'border-[#DE3804] text-white bg-neutral-800/40'
-                    : 'border-transparent text-neutral-400 hover:text-white'
-                }`}
-              >
-                <AlertCircle className="w-3.5 h-3.5" />
-                <span>Diagnostics</span>
-                {(errorCount > 0 || warningCount > 0) && (
-                  <span
-                    className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      errorCount > 0 ? 'bg-red-500 text-white' : 'bg-amber-500 text-black'
-                    }`}
-                  >
-                    {errorCount > 0 ? errorCount : warningCount}
-                  </span>
-                )}
-              </button>
+                <button
+                  onClick={() => setActiveTab('diagnostics')}
+                  className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
+                    activeTab === 'diagnostics'
+                      ? 'border-[#DE3804] text-white bg-neutral-800/40'
+                      : 'border-transparent text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Diagnostics</span>
+                  {(errorCount > 0 || warningCount > 0) && (
+                    <span
+                      className={`ml-1 text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                        errorCount > 0 ? 'bg-red-500 text-white' : 'bg-amber-500 text-black'
+                      }`}
+                    >
+                      {errorCount > 0 ? errorCount : warningCount}
+                    </span>
+                  )}
+                </button>
 
-              <button
-                onClick={() => setActiveTab('asm')}
-                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
-                  activeTab === 'asm'
-                    ? 'border-[#DE3804] text-white bg-neutral-800/40'
-                    : 'border-transparent text-neutral-400 hover:text-white'
-                }`}
-              >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>Assembly (ASM)</span>
-              </button>
+                <button
+                  onClick={() => setActiveTab('asm')}
+                  className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
+                    activeTab === 'asm'
+                      ? 'border-[#DE3804] text-white bg-neutral-800/40'
+                      : 'border-transparent text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>Assembly (ASM)</span>
+                </button>
 
-              <button
-                onClick={() => setActiveTab('cargo')}
-                className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
-                  activeTab === 'cargo'
-                    ? 'border-[#DE3804] text-white bg-neutral-800/40'
-                    : 'border-transparent text-neutral-400 hover:text-white'
-                }`}
-              >
-                <Package className="w-3.5 h-3.5" />
-                <span>Cargo & Workspace</span>
-              </button>
+                <button
+                  onClick={() => setActiveTab('cargo')}
+                  className={`flex items-center gap-1.5 px-3 py-2 border-b-2 font-medium transition-colors cursor-pointer ${
+                    activeTab === 'cargo'
+                      ? 'border-[#DE3804] text-white bg-neutral-800/40'
+                      : 'border-transparent text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <Package className="w-3.5 h-3.5" />
+                  <span>Cargo & Workspace</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Tab View */}
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'terminal' && (
+                <TerminalOutput
+                  result={executionResult}
+                  isRunning={isRunning}
+                  onClear={() => setExecutionResult(null)}
+                />
+              )}
+
+              {activeTab === 'diagnostics' && (
+                <DiagnosticsPanel
+                  diagnostics={diagnostics}
+                  code={activeFile.content}
+                  files={files}
+                  stderr={executionResult?.stderr || ''}
+                  onSelectLine={(l, file) => {
+                    if (file && file !== activeFilePath) {
+                      setActiveFilePath(file);
+                    }
+                    setSelectedLine(l);
+                  }}
+                  onApplyFix={(fixedCode, file) => {
+                    const targetPath = file || activeFilePath;
+                    handleChangeFileContent(targetPath, fixedCode);
+                    setDiagnostics([]);
+                  }}
+                />
+              )}
+
+              {activeTab === 'asm' && (
+                <AssemblyViewer
+                  asmCode={asmOutput}
+                  isCompiling={isRunning}
+                  onRefreshAsm={handleRun}
+                />
+              )}
+
+              {activeTab === 'cargo' && (
+                <CargoManager
+                  files={files}
+                  cargoToml={cargoToml}
+                  onChangeCargoToml={(newToml) =>
+                    handleChangeFileContent('Cargo.toml', newToml)
+                  }
+                  onSelectFile={setActiveFilePath}
+                  onCreateModule={handleCreateModule}
+                  onDeleteModule={handleDeleteModule}
+                  onToggleModDeclaration={handleToggleModDeclaration}
+                  onInsertImport={handleInsertImport}
+                />
+              )}
             </div>
           </div>
-
-          {/* Active Tab View */}
-          <div className="flex-1 overflow-hidden">
-            {activeTab === 'terminal' && (
-              <TerminalOutput
-                result={executionResult}
-                isRunning={isRunning}
-                onClear={() => setExecutionResult(null)}
-              />
-            )}
-
-            {activeTab === 'diagnostics' && (
-              <DiagnosticsPanel
-                diagnostics={diagnostics}
-                code={activeFile.content}
-                stderr={executionResult?.stderr || ''}
-                onSelectLine={(l, file) => {
-                  if (file && file !== activeFilePath) {
-                    setActiveFilePath(file);
-                  }
-                  setSelectedLine(l);
-                }}
-                onApplyFix={(fixedCode) => {
-                  handleChangeFileContent(activeFilePath, fixedCode);
-                  setDiagnostics([]);
-                }}
-              />
-            )}
-
-            {activeTab === 'asm' && (
-              <AssemblyViewer
-                asmCode={asmOutput}
-                isCompiling={isRunning}
-                onRefreshAsm={handleRun}
-              />
-            )}
-
-            {activeTab === 'cargo' && (
-              <CargoManager
-                files={files}
-                cargoToml={cargoToml}
-                onChangeCargoToml={(newToml) =>
-                  handleChangeFileContent('Cargo.toml', newToml)
-                }
-                onSelectFile={setActiveFilePath}
-                onCreateModule={handleCreateModule}
-                onDeleteModule={handleDeleteModule}
-                onToggleModDeclaration={handleToggleModDeclaration}
-                onInsertImport={handleInsertImport}
-              />
-            )}
           </div>
-        </div>
         </div>
       </main>
 
@@ -1089,6 +1112,7 @@ export default function App() {
       <AcademyModal
         isOpen={isAcademyOpen}
         onClose={() => setIsAcademyOpen(false)}
+        initialSection={academySection}
         progress={userProgress}
         onUnlockHint={handleUnlockHint}
         onLoadExerciseToEditor={handleLoadExercise}
@@ -1104,43 +1128,7 @@ export default function App() {
         onSelectSnippet={handleSelectSnippet}
       />
 
-      {isCratesOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-          <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-4xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800 bg-[#16161a]">
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4 text-amber-500" />
-                <h3 className="text-sm font-bold text-neutral-100">
-                  Workspace Modules & Crates Catalog
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsCratesOpen(false)}
-                className="text-neutral-400 hover:text-white text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <CargoManager
-                files={files}
-                cargoToml={cargoToml}
-                onChangeCargoToml={(newToml) =>
-                  handleChangeFileContent('Cargo.toml', newToml)
-                }
-                onSelectFile={(path) => {
-                  setActiveFilePath(path);
-                  setIsCratesOpen(false);
-                }}
-                onCreateModule={handleCreateModule}
-                onDeleteModule={handleDeleteModule}
-                onToggleModDeclaration={handleToggleModDeclaration}
-                onInsertImport={handleInsertImport}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       <BorrowGuideModal
         isOpen={isBorrowGuideOpen}
@@ -1157,7 +1145,7 @@ export default function App() {
         onClose={() => setIsClippyOpen(false)}
         onRunClippy={() => {
           setTarget('clippy');
-          setTimeout(() => handleRun(), 50);
+          handleRun('clippy');
         }}
       />
 
@@ -1178,8 +1166,9 @@ export default function App() {
         onClose={() => setIsOptimizerOpen(false)}
         isLoading={isOptimizing}
         optimizationData={optimizationData}
+        targetFileName={activeFile.name}
         onApplyRecommendedCode={(refactored) => {
-          handleChangeFileContent('src/main.rs', refactored);
+          handleChangeFileContent(activeFilePath, refactored);
           setDiagnostics([]);
         }}
       />
@@ -1194,15 +1183,6 @@ export default function App() {
         }}
       />
 
-      <DsaLabModal
-        isOpen={isDsaLabOpen}
-        onClose={() => setIsDsaLabOpen(false)}
-        onLoadSnippetToEditor={(code) => {
-          handleChangeFileContent('src/main.rs', code);
-          setActiveFilePath('src/main.rs');
-          setDiagnostics([]);
-        }}
-      />
     </div>
   );
 }

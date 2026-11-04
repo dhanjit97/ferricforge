@@ -19,9 +19,14 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
 
   const stdout = result?.stdout || '';
   const stderr = result?.stderr || '';
+  const errorMsg = result?.error || '';
 
   const handleCopy = async () => {
-    const combined = `--- STDOUT ---\n${stdout}\n\n--- STDERR ---\n${stderr}`;
+    const parts: string[] = [];
+    if (errorMsg) parts.push(`--- ERROR ---\n${errorMsg}`);
+    if (stdout) parts.push(`--- STDOUT ---\n${stdout}`);
+    if (stderr) parts.push(`--- STDERR ---\n${stderr}`);
+    const combined = parts.join('\n\n');
     try {
       await navigator.clipboard.writeText(combined);
       setCopied(true);
@@ -35,7 +40,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
   const exitDetail = result?.exitDetail || (result ? (isSuccess ? 'Exited with status 0' : 'Compilation / Runtime Error') : '');
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 font-mono text-xs overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 font-mono text-xs overflow-hidden select-none theme-panel">
       {/* Top Bar / Status */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-800 bg-[#161b22] text-xs">
         <div className="flex items-center gap-2">
@@ -144,6 +149,19 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Error output from runner or API */}
+            {errorMsg && (
+              <div className="space-y-1">
+                <div className="text-[11px] font-sans font-medium text-red-400 tracking-wider uppercase flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span>Execution Error:</span>
+                </div>
+                <div className="p-3 rounded bg-red-950/40 border border-red-500/30 text-red-200">
+                  {errorMsg}
+                </div>
+              </div>
+            )}
+
             {/* Compiler / Build diagnostic output (stderr) */}
             {(viewFilter === 'all' || viewFilter === 'stderr') && stderr && (
               <div className="space-y-1">
@@ -177,7 +195,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
               </div>
             )}
 
-            {!stdout && !stderr && (
+            {!stdout && !stderr && !errorMsg && (
               <div className="text-neutral-400 italic">Program finished cleanly with no console output.</div>
             )}
           </div>

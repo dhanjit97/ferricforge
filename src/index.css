@@ -242,8 +242,23 @@
 [data-mode="light"] .bg-\[\#0d1117\]\/80,
 [data-mode="light"] .bg-\[\#0d1117\]\/90,
 [data-mode="light"] .bg-\[\#121214\],
-[data-mode="light"] .bg-\[\#161b22\] {
+[data-mode="light"] .bg-\[\#161b22\],
+[data-mode="light"] .bg-\[\#16161a\],
+[data-mode="light"] .bg-\[\#141417\],
+[data-mode="light"] .bg-\[\#0f141c\],
+[data-mode="light"] .bg-\[\#0a0a0d\] {
   background-color: #f8fafc !important;
+}
+
+/* Light mode: dark text on light surfaces (global text contrast fix) */
+[data-mode="light"] .text-neutral-500 {
+  color: #475569 !important;
+}
+[data-mode="light"] .text-neutral-400 {
+  color: #64748b !important;
+}
+[data-mode="light"] .text-neutral-300 {
+  color: #334155 !important;
 }
 
 /* Light mode: dark text on light panel surfaces */
@@ -269,6 +284,52 @@
   color: #334155 !important;
 }
 [data-mode="light"] .border-l.border-neutral-800.bg-\[\#0d1117\] .text-neutral-400 {
+  color: #475569 !important;
+}
+
+/* Light mode: dark text inside additional panel surfaces (modals, drawers) */
+[data-mode="light"] .bg-\[\#16161a\] .text-neutral-200,
+[data-mode="light"] .bg-\[\#16161a\] .text-neutral-100,
+[data-mode="light"] .bg-\[\#16161a\] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] .bg-\[\#16161a\] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] .bg-\[\#16161a\] .text-neutral-400 {
+  color: #475569 !important;
+}
+[data-mode="light"] .bg-\[\#141417\] .text-neutral-200,
+[data-mode="light"] .bg-\[\#141417\] .text-neutral-100,
+[data-mode="light"] .bg-\[\#141417\] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] .bg-\[\#141417\] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] .bg-\[\#141417\] .text-neutral-400 {
+  color: #475569 !important;
+}
+[data-mode="light"] .bg-\[\#0f141c\] .text-neutral-200,
+[data-mode="light"] .bg-\[\#0f141c\] .text-neutral-100,
+[data-mode="light"] .bg-\[\#0f141c\] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] .bg-\[\#0f141c\] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] .bg-\[\#0f141c\] .text-neutral-400 {
+  color: #475569 !important;
+}
+[data-mode="light"] .bg-\[\#0a0a0d\] .text-neutral-200,
+[data-mode="light"] .bg-\[\#0a0a0d\] .text-neutral-100,
+[data-mode="light"] .bg-\[\#0a0a0d\] .text-white {
+  color: #0f172a !important;
+}
+[data-mode="light"] .bg-\[\#0a0a0d\] .text-neutral-300 {
+  color: #334155 !important;
+}
+[data-mode="light"] .bg-\[\#0a0a0d\] .text-neutral-400 {
   color: #475569 !important;
 }
 

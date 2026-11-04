@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ParsedDiagnostic, AiExplanation } from '../types/rust';
+import { ParsedDiagnostic, AiExplanation, WorkspaceFile } from '../types/rust';
 import { generateHeuristicBorrowTimeline } from '../utils/diagnosticParser';
 import {
   AlertCircle,
@@ -18,14 +18,16 @@ import {
 interface DiagnosticsPanelProps {
   diagnostics: ParsedDiagnostic[];
   code: string;
+  files?: WorkspaceFile[];
   stderr: string;
   onSelectLine: (line: number, file?: string) => void;
-  onApplyFix: (fixedCode: string) => void;
+  onApplyFix: (fixedCode: string, file?: string) => void;
 }
 
 export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
   diagnostics,
   code,
+  files,
   stderr,
   onSelectLine,
   onApplyFix,
@@ -51,12 +53,15 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
 
   const handleAskAi = async (diag: ParsedDiagnostic) => {
     setLoadingAiId(diag.id);
+    const targetFile = diag.file;
+    const fileCode = files?.find((f) => f.path === targetFile)?.content || code;
+
     try {
       const response = await fetch('/api/explain-error', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code,
+          code: fileCode,
           errorOutput: diag.rawText || stderr,
           selectedDiagnostic: `${diag.errorCode ? `[${diag.errorCode}] ` : ''}${diag.message}`,
         }),
@@ -77,7 +82,7 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
   };
 
   const handleApplyAiFix = (diagId: string, fixCode: string) => {
-    onApplyFix(fixCode);
+    onApplyFix(fixCode, activeDiag?.file);
     setAppliedFixId(diagId);
     setTimeout(() => setAppliedFixId(null), 3000);
   };
@@ -100,7 +105,7 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
     : [];
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 text-xs overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 text-xs overflow-hidden select-none theme-panel">
       {/* Diagnostics Header & Counts */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-neutral-800 bg-[#161b22]">
         <div className="flex items-center gap-3">
@@ -135,8 +140,8 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
 
       {/* Main split: List of Diagnostics on Left, Deep Explainer on Right */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left List of Issues */}
-        <div className="w-1/3 border-r border-neutral-800 overflow-y-auto divide-y divide-neutral-800/60 bg-[#0f141c]">
+        {/* Left List of Issues (Minimum width ensures items don't get squished) */}
+        <div className="w-56 shrink-0 border-r border-neutral-800 overflow-y-auto divide-y divide-neutral-800/60 bg-[#0f141c]">
           {diagnostics.map((diag) => {
             const isSelected = (activeDiag && activeDiag.id === diag.id);
             const isError = diag.type === 'error';
@@ -148,7 +153,7 @@ export const DiagnosticsPanel: React.FC<DiagnosticsPanelProps> = ({
                   setSelectedDiagId(diag.id);
                   onSelectLine(diag.line, diag.file);
                 }}
-                className={`p-3 cursor-pointer transition-colors ${
+                className={`p-3 cursor-pointer transition-colors theme-card ${
                   isSelected
                     ? 'bg-neutral-800/80 border-l-2 border-l-[#DE3804]'
                     : 'hover:bg-neutral-800/30'

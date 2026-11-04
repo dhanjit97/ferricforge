@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cpu, Copy, Check, Filter, Sparkles, Search } from 'lucide-react';
+import { Cpu, Copy, Check, Filter, Sparkles, Search, RotateCcw } from 'lucide-react';
 
 interface AssemblyViewerProps {
   asmCode: string;
@@ -74,7 +74,7 @@ export const AssemblyViewer: React.FC<AssemblyViewerProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 font-mono text-xs overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 font-mono text-xs overflow-hidden select-none theme-panel">
       {/* Top Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-neutral-800 bg-[#161b22]">
         <div className="flex items-center gap-2">
@@ -86,6 +86,17 @@ export const AssemblyViewer: React.FC<AssemblyViewerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Refresh / Re-compile Button */}
+          <button
+            onClick={onRefreshAsm}
+            disabled={isCompiling}
+            title="Compile and disassemble"
+            className="flex items-center gap-1 px-2 py-0.5 bg-[#DE3804]/20 hover:bg-[#DE3804]/30 text-[#DE3804] border border-[#DE3804]/40 rounded text-[11px] transition-colors cursor-pointer disabled:opacity-40"
+          >
+            <RotateCcw className={`w-3 h-3 ${isCompiling ? 'animate-spin' : ''}`} />
+            <span>Disassemble</span>
+          </button>
+
           {/* Directive Filter Toggle */}
           <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-neutral-400 hover:text-neutral-200">
             <input
@@ -95,7 +106,7 @@ export const AssemblyViewer: React.FC<AssemblyViewerProps> = ({
               className="rounded border-neutral-700 text-[#DE3804] focus:ring-[#DE3804]"
             />
             <Filter className="w-3 h-3" />
-            <span>Hide Directives (.cfi, .L)</span>
+            <span>Hide Directives</span>
           </label>
 
           {/* Search box */}
@@ -154,10 +165,20 @@ export const AssemblyViewer: React.FC<AssemblyViewerProps> = ({
             <span>Compiling Rust to release assembly via rustc...</span>
           </div>
         ) : processedLines.length === 0 ? (
-          <div className="text-center py-12 text-neutral-500 font-sans">
-            <Cpu className="w-8 h-8 text-neutral-600 mx-auto mb-2" />
-            <p className="font-medium text-neutral-400">No assembly output generated yet</p>
-            <p className="text-xs text-neutral-600 mt-1">Select ASM target and click Run to disassemble</p>
+          <div className="text-center py-12 text-neutral-500 font-sans space-y-3">
+            <Cpu className="w-8 h-8 text-neutral-600 mx-auto" />
+            <div>
+              <p className="font-medium text-neutral-400">No assembly output generated yet</p>
+              <p className="text-xs text-neutral-600 mt-1">Compile and disassemble Rust code to inspect x86_64 instructions</p>
+            </div>
+            <button
+              onClick={onRefreshAsm}
+              disabled={isCompiling}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#DE3804] hover:bg-[#C23103] text-white rounded text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isCompiling ? 'animate-spin' : ''}`} />
+              <span>Generate Assembly Now</span>
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-neutral-900/50">

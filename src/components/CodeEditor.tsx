@@ -72,6 +72,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   // New module modal
   const [isCreatingMod, setIsCreatingMod] = useState(false);
+  const [confirmDeletePath, setConfirmDeletePath] = useState<string | null>(null);
 
   // Active file object
   const activeFile = files.find((f) => f.path === activeFilePath) || files[0];
@@ -260,7 +261,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#18181b] text-neutral-200 border-r border-neutral-800 select-none">
+    <div className="flex flex-col h-full bg-[#18181b] text-neutral-200 border-r border-neutral-800 select-none theme-panel">
       {/* File Tabs & Actions Strip */}
       <div className="flex items-center justify-between px-2 pt-2 border-b border-neutral-800 bg-[#121214] text-xs">
         <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
@@ -289,7 +290,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
             return (
               <div
                 key={file.path}
-                className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-t font-mono text-xs transition-colors cursor-pointer shrink-0 ${
+                className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-t font-mono text-xs transition-colors cursor-pointer shrink-0 theme-card ${
                   isActive
                     ? 'bg-[#18181b] text-neutral-100 border-t-2 border-t-[#DE3804]'
                     : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -319,12 +320,21 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm(`Delete module ${file.name}?`)) {
+                      if (confirmDeletePath === file.path) {
                         onDeleteModule(file.path);
+                        setConfirmDeletePath(null);
+                      } else {
+                        setConfirmDeletePath(file.path);
+                        setTimeout(() => setConfirmDeletePath(null), 3000);
                       }
                     }}
-                    title="Delete Module"
-                    className="ml-1 text-neutral-500 hover:text-red-400 rounded transition-colors opacity-0 group-hover:opacity-100 p-0.5 cursor-pointer"
+                    title={confirmDeletePath === file.path ? `Click again to confirm deleting ${file.name}` : `Delete ${file.name}`}
+                    aria-label={`Delete ${file.name}`}
+                    className={`ml-1 rounded transition-colors p-0.5 cursor-pointer ${
+                      confirmDeletePath === file.path
+                        ? 'text-red-400 bg-red-500/20 opacity-100 ring-1 ring-red-500/40'
+                        : 'text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100'
+                    }`}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -543,40 +553,47 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                 return (
                   <div
                     key={lineNum}
-                    className={`h-[21px] relative ${
+                    className={`h-[21px] relative flex items-center justify-between ${
                       isSelected ? 'bg-amber-500/10 -mx-3 px-3' : ''
                     }`}
                   >
-                    {/* Render Syntax Tokens */}
-                    {tokens.map((token, tIdx) => {
-                      let colorClass = 'text-neutral-200';
-                      if (token.type === 'keyword') colorClass = 'text-[#f472b6] font-medium';
-                      else if (token.type === 'type') colorClass = 'text-[#38bdf8] font-medium';
-                      else if (token.type === 'macro') colorClass = 'text-[#fb923c] font-medium';
-                      else if (token.type === 'string') colorClass = 'text-[#4ade80]';
-                      else if (token.type === 'comment') colorClass = 'text-[#71717a] italic';
-                      else if (token.type === 'number') colorClass = 'text-[#a78bfa]';
-                      else if (token.type === 'attribute') colorClass = 'text-[#facc15]';
-                      else if (token.type === 'lifetime') colorClass = 'text-[#fbbf24] font-semibold';
-                      else if (token.type === 'operator') colorClass = 'text-[#94a3b8]';
-                      else if (token.type === 'punctuation') colorClass = 'text-[#cbd5e1]';
+                    <div className="whitespace-pre">
+                      {/* Render Syntax Tokens */}
+                      {tokens.map((token, tIdx) => {
+                        let colorClass = 'text-neutral-200';
+                        if (token.type === 'keyword') colorClass = 'text-[#f472b6] font-medium';
+                        else if (token.type === 'type') colorClass = 'text-[#38bdf8] font-medium';
+                        else if (token.type === 'macro') colorClass = 'text-[#fb923c] font-medium';
+                        else if (token.type === 'string') colorClass = 'text-[#4ade80]';
+                        else if (token.type === 'comment') colorClass = 'text-[#71717a] italic';
+                        else if (token.type === 'number') colorClass = 'text-[#a78bfa]';
+                        else if (token.type === 'attribute') colorClass = 'text-[#facc15]';
+                        else if (token.type === 'lifetime') colorClass = 'text-[#fbbf24] font-semibold';
+                        else if (token.type === 'operator') colorClass = 'text-[#94a3b8]';
+                        else if (token.type === 'punctuation') colorClass = 'text-[#cbd5e1]';
 
-                      return (
-                        <span key={tIdx} className={colorClass}>
-                          {token.text}
-                        </span>
-                      );
-                    })}
+                        return (
+                          <span key={tIdx} className={colorClass}>
+                            {token.text}
+                          </span>
+                        );
+                      })}
+                      {line.length === 0 && <span>&nbsp;</span>}
+                    </div>
 
-                    {/* Inlay Hints rendered inline at end of variable */}
-                    {lineHints.map((hint, hIdx) => (
-                      <span
-                        key={hIdx}
-                        className="ml-1 text-[11px] text-neutral-500 font-mono select-none px-1 py-0.2 rounded bg-neutral-800/60 border border-neutral-700/50"
-                      >
-                        {hint.label}
-                      </span>
-                    ))}
+                    {/* Inlay Hints rendered on right margin so they don't shift character horizontal positions */}
+                    {lineHints.length > 0 && (
+                      <div className="flex items-center gap-1 select-none pointer-events-none pr-2">
+                        {lineHints.map((hint, hIdx) => (
+                          <span
+                            key={hIdx}
+                            className="text-[10px] text-sky-400 font-mono select-none px-1 py-0.2 rounded bg-neutral-800/80 border border-neutral-700/60"
+                          >
+                            {hint.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Real-time Squiggly Line Error Indicator */}
                     {lineDiag && (
@@ -589,14 +606,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
                         onMouseEnter={() => lineDiag.diag && setHoveredDiagnostic(lineDiag.diag)}
                       />
                     )}
-
-                    {line.length === 0 && <span>&nbsp;</span>}
                   </div>
                 );
               })}
             </div>
 
-            {/* Editable Textarea */}
+            {/* Editable Textarea with explicit typography parity */}
             <textarea
               ref={textareaRef}
               value={activeContent}
@@ -611,7 +626,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
               spellCheck={false}
               autoCapitalize="off"
               autoComplete="off"
-              className="absolute inset-0 w-full h-full p-3 bg-transparent text-transparent caret-white resize-none outline-none font-mono whitespace-pre overflow-auto"
+              className="absolute inset-0 w-full h-full p-3 bg-transparent text-transparent caret-[#DE3804] resize-none outline-none font-mono text-[13px] leading-[21px] whitespace-pre overflow-auto"
               style={{
                 tabSize: 4,
               }}

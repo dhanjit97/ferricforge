@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ExternalLink,
   BookOpen,
@@ -14,6 +14,7 @@ import {
   Compass,
   ArrowRight,
 } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ReferenceHubModalProps {
   isOpen: boolean;
@@ -243,6 +244,19 @@ export const ReferenceHubModal: React.FC<ReferenceHubModalProps> = ({
 }) => {
   const [selectedRefId, setSelectedRefId] = useState<string>(REFERENCES[0].id);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
 
   if (!isOpen) return null;
 
@@ -260,7 +274,7 @@ export const ReferenceHubModal: React.FC<ReferenceHubModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-5xl h-[88vh] flex flex-col shadow-2xl overflow-hidden select-none">
+      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-5xl h-[88vh] flex flex-col shadow-2xl overflow-hidden select-none theme-panel" ref={modalRef}>
         {/* Top Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800 bg-[#16161a]">
           <div className="flex items-center gap-3">
@@ -283,6 +297,7 @@ export const ReferenceHubModal: React.FC<ReferenceHubModalProps> = ({
           <button
             onClick={onClose}
             className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+            aria-label="Close Knowledge Hub"
           >
             <X className="w-4 h-4" />
           </button>

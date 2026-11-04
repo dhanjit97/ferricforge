@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CheckCircle2, X, Play, Sparkles, ExternalLink } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface ClippyModalProps {
   isOpen: boolean;
@@ -12,6 +13,20 @@ export const ClippyModal: React.FC<ClippyModalProps> = ({
   onClose,
   onRunClippy,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
+
   if (!isOpen) return null;
 
   const clippyCategories = [
@@ -43,7 +58,7 @@ export const ClippyModal: React.FC<ClippyModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none">
+      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none theme-panel" ref={modalRef}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800 bg-[#16161a]">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-md bg-emerald-500/20 text-emerald-400">
@@ -58,6 +73,7 @@ export const ClippyModal: React.FC<ClippyModalProps> = ({
           <button
             onClick={onClose}
             className="p-1 text-neutral-400 hover:text-white rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+            aria-label="Close Clippy"
           >
             <X className="w-4 h-4" />
           </button>

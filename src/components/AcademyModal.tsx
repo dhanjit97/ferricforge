@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CURRICULUM_LESSONS, calculateLevelFromXp } from '../utils/curriculumData';
 import { FRAMEWORK_GUIDES } from '../utils/frameworksData';
 import { CAPSTONE_PROJECTS } from '../utils/capstoneProjectsData';
@@ -43,10 +43,12 @@ import {
   Lock,
   RefreshCw,
 } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface AcademyModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSection?: AcademySection;
   progress: UserProgress;
   onUnlockHint: (lessonId: string, hintIndex: number) => void;
   onLoadExerciseToEditor: (code: string) => void;
@@ -61,6 +63,7 @@ type AcademySection = 'curriculum' | 'frameworks' | 'capstones' | 'memory-explor
 export const AcademyModal: React.FC<AcademyModalProps> = ({
   isOpen,
   onClose,
+  initialSection,
   progress,
   onUnlockHint,
   onLoadExerciseToEditor,
@@ -69,7 +72,8 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
   onLoadProjectWorkspace,
   onKnowledgeCheckSubmit,
 }) => {
-  const [section, setSection] = useState<AcademySection>('curriculum');
+  const [section, setSection] = useState<AcademySection>(initialSection || 'curriculum');
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Curriculum state
   const [selectedLessonId, setSelectedLessonId] = useState<string>(CURRICULUM_LESSONS[0].id);
@@ -92,6 +96,18 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
   // DSA State
   const [selectedDsaId, setSelectedDsaId] = useState<string>(DSA_TOPICS[0].id);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
 
   if (!isOpen) return null;
 
@@ -164,7 +180,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl overflow-hidden select-none">
+      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl overflow-hidden select-none theme-panel" ref={modalRef}>
         {/* Top Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-neutral-800 bg-[#16161a]">
           <div className="flex items-center gap-3">
@@ -207,6 +223,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
             <button
               onClick={onClose}
               className="p-1.5 text-neutral-400 hover:text-white rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+              aria-label="Close Academy"
             >
               <X className="w-4 h-4" />
             </button>
@@ -214,11 +231,11 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
         </div>
 
         {/* Master Navigation Bar */}
-        <div className="flex items-center justify-between px-5 py-2 border-b border-neutral-800 bg-[#121214]">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-3 px-5 py-2 border-b border-neutral-800 bg-[#121214] overflow-x-auto">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={() => setSection('curriculum')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                 section === 'curriculum'
                   ? 'bg-neutral-800 text-white shadow-xs border border-neutral-700'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -230,7 +247,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
             <button
               onClick={() => setSection('frameworks')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                 section === 'frameworks'
                   ? 'bg-neutral-800 text-white shadow-xs border border-neutral-700'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -242,7 +259,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
             <button
               onClick={() => setSection('capstones')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                 section === 'capstones'
                   ? 'bg-neutral-800 text-white shadow-xs border border-neutral-700'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -254,7 +271,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
             <button
               onClick={() => setSection('memory-explorer')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                 section === 'memory-explorer'
                   ? 'bg-neutral-800 text-white shadow-xs border border-neutral-700'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -266,7 +283,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
 
             <button
               onClick={() => setSection('dsa')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer shrink-0 ${
                 section === 'dsa'
                   ? 'bg-neutral-800 text-white shadow-xs border border-neutral-700'
                   : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/40'
@@ -277,7 +294,7 @@ export const AcademyModal: React.FC<AcademyModalProps> = ({
             </button>
           </div>
 
-          <div className="text-[11px] text-neutral-400">
+          <div className="text-[11px] text-neutral-400 shrink-0">
             {progress.completedLessonIds.length} / {CURRICULUM_LESSONS.length} Lessons Mastered
           </div>
         </div>

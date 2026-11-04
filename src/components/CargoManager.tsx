@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { POPULAR_CRATES } from '../utils/crateRegistry';
 import { CrateItem, WorkspaceFile } from '../types/rust';
 import {
@@ -60,13 +60,32 @@ export const CargoManager: React.FC<CargoManagerProps> = ({
     (f) => f.path.startsWith('src/') && f.path !== 'src/main.rs'
   );
 
+  const isCrateInToml = (toml: string, crateName: string): boolean => {
+    const escaped = crateName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`^[ \\t]*${escaped}\\s*=`, 'm');
+    return regex.test(toml);
+  };
+
   const [addedCrateNames, setAddedCrateNames] = useState<Set<string>>(() => {
     const set = new Set<string>();
     POPULAR_CRATES.forEach((c) => {
-      if (cargoToml.includes(c.name)) set.add(c.name);
+      const escaped = c.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (new RegExp(`^[ \\t]*${escaped}\\s*=`, 'm').test(cargoToml)) {
+        set.add(c.name);
+      }
     });
     return set;
   });
+
+  useEffect(() => {
+    const set = new Set<string>();
+    POPULAR_CRATES.forEach((c) => {
+      if (isCrateInToml(cargoToml, c.name)) {
+        set.add(c.name);
+      }
+    });
+    setAddedCrateNames(set);
+  }, [cargoToml]);
 
   const categories = [
     'all',
@@ -88,14 +107,12 @@ export const CargoManager: React.FC<CargoManagerProps> = ({
 
   const handleToggleCrate = (crate: CrateItem) => {
     let newToml = cargoToml;
-    const isPresent = addedCrateNames.has(crate.name);
+    const isPresent = isCrateInToml(cargoToml, crate.name);
 
     if (isPresent) {
-      const regex = new RegExp(`^${crate.name}\\s*=.*$\\n?`, 'm');
+      const escaped = crate.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`^[ \\t]*${escaped}\\s*=.*$\\n?`, 'm');
       newToml = newToml.replace(regex, '');
-      const nextSet = new Set(addedCrateNames);
-      nextSet.delete(crate.name);
-      setAddedCrateNames(nextSet);
     } else {
       if (!newToml.includes('[dependencies]')) {
         newToml += '\n[dependencies]\n';
@@ -108,9 +125,6 @@ export const CargoManager: React.FC<CargoManagerProps> = ({
           : `${crate.name} = "${crate.version}"\n`;
 
       newToml += depLine;
-      const nextSet = new Set(addedCrateNames);
-      nextSet.add(crate.name);
-      setAddedCrateNames(nextSet);
     }
 
     onChangeCargoToml(newToml);
@@ -240,7 +254,7 @@ pub fn truncate_ellipsis(text: &str, max_len: usize) -> String {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 text-xs overflow-hidden select-none">
+    <div className="flex flex-col h-full bg-[#0d1117] text-neutral-200 text-xs overflow-hidden select-none theme-panel">
       {/* Top Header & Sub-navigation */}
       <div className="p-3 border-b border-neutral-800 bg-[#161b22] space-y-2.5">
         <div className="flex items-center justify-between">
@@ -367,7 +381,7 @@ pub fn truncate_ellipsis(text: &str, max_len: usize) -> String {
                 return (
                   <div
                     key={file.path}
-                    className={`p-3 rounded-lg border transition-all ${
+                    className={`p-3 rounded-lg border transition-all theme-card ${
                       isDeclared
                         ? 'bg-neutral-900/90 border-neutral-800'
                         : 'bg-neutral-900/60 border-amber-500/30'
@@ -556,7 +570,7 @@ pub fn truncate_ellipsis(text: &str, max_len: usize) -> String {
               return (
                 <div
                   key={crate.name}
-                  className={`p-3 rounded-lg border transition-all ${
+                  className={`p-3 rounded-lg border transition-all theme-card ${
                     isAdded
                       ? 'bg-neutral-900 border-amber-500/40 shadow-xs'
                       : 'bg-neutral-900/60 border-neutral-800 hover:border-neutral-700'

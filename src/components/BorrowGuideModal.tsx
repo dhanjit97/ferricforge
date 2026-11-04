@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BookMarked, X, Play, ShieldAlert, Cpu, Sparkles } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface BorrowGuideModalProps {
   isOpen: boolean;
@@ -12,6 +13,20 @@ export const BorrowGuideModal: React.FC<BorrowGuideModalProps> = ({
   onClose,
   onLoadSnippet,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Trap focus inside the modal when open
+  useFocusTrap(isOpen, modalRef);
+
   if (!isOpen) return null;
 
   const topics = [
@@ -85,7 +100,7 @@ fn main() {
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
-      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none">
+      <div className="bg-[#121214] border border-neutral-800 rounded-xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden select-none theme-panel" ref={modalRef}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800 bg-[#16161a]">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-md bg-[#DE3804]/20 text-[#DE3804]">
@@ -100,6 +115,7 @@ fn main() {
           <button
             onClick={onClose}
             className="p-1 text-neutral-400 hover:text-white rounded hover:bg-neutral-800 transition-colors cursor-pointer"
+            aria-label="Close Borrow Guide"
           >
             <X className="w-4 h-4" />
           </button>
