@@ -1,0 +1,1 @@
+we have build the applicattion that uses rust playground, where do we stand for them and the users like do they actually allow doing so and are there any examples of doing so ?

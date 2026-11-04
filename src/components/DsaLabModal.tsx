@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DSA_TOPICS, DsaTopic } from '../utils/dsaData';
 import {
   Binary,
@@ -36,6 +36,15 @@ export const DsaLabModal: React.FC<DsaLabModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -92,6 +101,7 @@ export const DsaLabModal: React.FC<DsaLabModalProps> = ({
           <button
             onClick={onClose}
             className="p-1.5 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer text-sm font-semibold"
+            aria-label="Close DSA Lab"
           >
             ✕
           </button>
