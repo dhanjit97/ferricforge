@@ -1,7 +1,3 @@
-<div align="center">
-  <img width="1200" height="475" alt="FerricForge Banner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
-
 <h1 align="center">FerricForge — Terminal-Grade Rust Systems Workbench</h1>
 
 <p align="center">
