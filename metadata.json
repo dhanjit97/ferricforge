@@ -1,0 +1,6 @@
+{
+  "name": "FerricForge Ultimate",
+  "description": "Terminal-grade Rust IDE and interactive systems engineering platform featuring real-time compilation via Rust Playground, live memory and borrow checker visualizers, and guided systems academy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

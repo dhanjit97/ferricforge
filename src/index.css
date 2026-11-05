@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --canvas-base: #0a0d14;
+    --surface-1: #101520;
+    --surface-2: #161d2d;
+    --surface-3: #272a32;
+    --vitreous-border: rgba(255, 255, 255, 0.08);
+    --primary-molten: #ff5400;
+    --primary-glow: #ff6d00;
+    --secondary-cyber: #00f0ff;
+    --secondary-container: #00eefc;
+    --tertiary-amber: #ff9e00;
+    --diag-green: #10b981;
+    --diag-crimson: #f43f5e;
+  }
+
+  body {
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--canvas-base);
+    color: #e1e2ec;
+  }
+
+  code, pre, kbd, samp {
+    font-family: 'JetBrains Mono', monospace;
+    font-feature-settings: "calt" 1, "liga" 1;
+  }
+}
+
+/* Systems Grid Background */
+.bg-substratum-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Micro-Etched Glassmorphism */
+.glass-panel {
+  background: rgba(16, 21, 32, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-elevated {
+  background: rgba(22, 29, 45, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.15), 0 8px 32px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Molten Ferric Aura */
+.molten-glow {
+  box-shadow: 0 0 18px rgba(255, 84, 0, 0.35);
+}
+
+.molten-glow-sm {
+  box-shadow: 0 0 10px rgba(255, 84, 0, 0.25);
+}
+
+/* Cyber Telemetry Aura */
+.cyber-glow {
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+}
+
+.cyber-glow-sm {
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.18);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0d14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #272a32;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff5400;
+}
+
+/* Horizontal scrollbar for category pill strips (thin, subtle) */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #272a32;
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #ff5400;
+}
+
+/* Hide scrollbars utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Custom animated caret */
+@keyframes cyber-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cyber-caret {
+  animation: cyber-pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
